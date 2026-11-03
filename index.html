@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Jersey · Character Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@500;800&family=Pinyon+Script&family=Playfair+Display:ital,wght@1,500&family=Chonburi&family=Noto+Serif+Thai:wght@300;400;600&display=swap" rel="stylesheet">
+<!-- Three.js for Crazy 3D Effects -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root{--gold:#ffd2a8;--ink:#0a0306;--grad:linear-gradient(100deg,#7a0019,#ff1e3c 35%,#ff8c9b 55%,#ff1e3c 75%,#7a0019)}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:#f3dfe2;font-family:'Noto Serif Thai','Playfair Display',serif;font-weight:300;line-height:1.95;letter-spacing:.01em;overflow-x:hidden}
+
+/* 3D Canvas Background */
+#bg-3d{position:fixed;inset:0;z-index:-1;pointer-events:none}
+
+.shine{background:var(--grad);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 6s linear infinite}
+@keyframes sh{to{background-position:-250% 0}}
+
+/* Loader */
+#loader{position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center;padding:20px;background:radial-gradient(circle at 50% 45%,#5a0016 0,#1a0008 45%,#050102 80%);transition:opacity 1.2s,visibility 1.2s}
+#loader.out{opacity:0;visibility:hidden}
+.sigil{position:relative;width:170px;height:170px}
+.sigil i{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,60,90,.7);box-shadow:0 0 30px rgba(255,30,60,.55),inset 0 0 30px rgba(255,30,60,.3)}
+.sigil i:nth-child(1){animation:spin 9s linear infinite;border-style:dashed}
+.sigil i:nth-child(2){inset:14px;animation:spin 6s linear infinite reverse;border-top-color:transparent;border-width:2px}
+.sigil i:nth-child(3){inset:34px;animation:pulse 2.2s ease-in-out infinite;background:radial-gradient(circle,rgba(255,30,60,.6),transparent 70%)}
+.sigil b{position:absolute;inset:0;display:grid;place-items:center;font-size:44px;filter:drop-shadow(0 0 14px #ff1e3c)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{transform:scale(1.25);opacity:.6}}
+.ltitle{font-family:'Cinzel Decorative',serif;font-weight:900;font-size:clamp(26px,7vw,46px);letter-spacing:.35em;padding-left:.35em}
+.lsub{font-family:'Pinyon Script',cursive;color:#ff9aa8;letter-spacing:.12em;font-size:26px}
+.bar{width:min(300px,70vw);height:2px;background:rgba(255,255,255,.1);overflow:hidden;border-radius:2px}
+.bar span{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 12px #ff1e3c;transition:width .2s}
+#pct{font-family:Cinzel,serif;font-size:12px;letter-spacing:.3em;color:#ff7a8a}
+#enter{opacity:0;pointer-events:none;transform:translateY(10px);transition:.9s;cursor:pointer;font-family:Cinzel,serif;letter-spacing:.3em;font-size:14px;color:#fff;padding:15px 40px;border:1px solid #ff1e3c;border-radius:40px;background:linear-gradient(120deg,rgba(255,30,60,.4),rgba(122,0,25,.55));box-shadow:0 0 30px rgba(255,30,60,.5),inset 0 0 20px rgba(255,30,60,.25);position:relative;overflow:hidden}
+#enter.on{opacity:1;pointer-events:auto;transform:none;animation:glow 2.4s ease-in-out infinite}
+#enter::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:swp 3s infinite}
+@keyframes swp{to{left:140%}}
+@keyframes glow{50%{box-shadow:0 0 55px rgba(255,30,60,.9),inset 0 0 26px rgba(255,30,60,.45)}}
+
+/* Main Content */
+#main{opacity:0;transition:opacity 1.6s;max-width:980px;margin:0 auto;padding:0 18px 90px;position:relative;z-index:1}
+#main.show{opacity:1}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:50px 0 30px;text-align:center}
+.eyebrow{font-family:'Pinyon Script',cursive;letter-spacing:.2em;color:#ff8c9b;font-size:28px;text-shadow:0 0 18px rgba(255,30,60,.6)}
+h1{font-family:'Cinzel Decorative',serif;font-weight:900;font-size:clamp(34px,10vw,76px);letter-spacing:.12em;line-height:1.1;filter:drop-shadow(0 0 22px rgba(255,30,60,.55))}
+.tag{font-family:Chonburi,serif;color:var(--gold);letter-spacing:.12em;font-size:15px;text-shadow:0 0 14px rgba(255,120,90,.5)}
+
+/* ================= HIGH-TECH 3D FRAME SYSTEM ================= */
+.frame-wrapper {
+    position: relative;
+    width: min(400px, 85vw);
+    aspect-ratio: 4/5;
+    margin: 20px auto;
+    perspective: 1200px;
+    cursor: pointer;
+}
+
+.frame-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    transform-style: preserve-3d;
+    transition: transform 0.15s ease-out;
+}
+
+/* Holographic Glare Effect */
+.frame-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(125deg, transparent 30%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.05) 50%, transparent 60%);
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+}
+.frame-wrapper:hover .frame-container::after { opacity: 1; }
+
+.frame-inner {
+    position: absolute;
+    inset: 11%; 
+    border-radius: 4px;
+    overflow: hidden;
+    z-index: 1;
+    background: #050102;
+    box-shadow: 0 0 50px rgba(255, 30, 60, 0.5), inset 0 0 30px rgba(0,0,0,0.9);
+    transform: translateZ(20px); /* 3D Depth */
+}
+
+.frame-inner img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.1);
+    transition: opacity 1.2s ease, transform 6s ease;
+}
+
+.frame-inner img.on {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.frame-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 3;
+    pointer-events: none;
+    filter: drop-shadow(0 0 20px rgba(255, 30, 60, 0.8));
+    transform: translateZ(40px); /* Frame floats above image */
+}
+
+.scan-line {
+    position: absolute;
+    inset: 11%;
+    z-index: 2;
+    background: linear-gradient(to bottom, transparent, rgba(255, 30, 60, 0.2), transparent);
+    height: 25%;
+    width: 100%;
+    animation: scan 5s linear infinite;
+    pointer-events: none;
+    opacity: 0.7;
+    transform: translateZ(30px);
+}
+@keyframes scan {
+    0% { transform: translateZ(30px) translateY(-100%); }
+    100% { transform: translateZ(30px) translateY(350%); }
+}
+
+.hud-corner {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #ff1e3c;
+    z-index: 4;
+    opacity: 0.9;
+    box-shadow: 0 0 10px #ff1e3c, inset 0 0 5px #ff1e3c;
+    transform: translateZ(45px);
+}
+.hud-corner.tl { top: 9%; left: 9%; border-right: none; border-bottom: none; border-radius: 4px 0 0 0; }
+.hud-corner.tr { top: 9%; right: 9%; border-left: none; border-bottom: none; border-radius: 0 4px 0 0; }
+.hud-corner.bl { bottom: 9%; left: 9%; border-right: none; border-top: none; border-radius: 0 0 0 4px; }
+.hud-corner.br { bottom: 9%; right: 9%; border-left: none; border-top: none; border-radius: 0 0 4px 0; }
+
+.thumbs{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top: 30px;}
+.thumbs img{width:54px;height:54px;object-fit:cover;border-radius:50%;border:2px solid rgba(255,60,90,.35);cursor:pointer;opacity:.55;transition:.4s}
+.thumbs img.on,.thumbs img:hover{opacity:1;border-color:#ff1e3c;box-shadow:0 0 18px #ff1e3c;transform:scale(1.15)}
+
+.scroll{font-size:11px;letter-spacing:.4em;color:#ff7a8a;animation:bob 2s infinite;margin-top: 30px;}
+@keyframes bob{50%{transform:translateY(8px);opacity:.5}}
+
+.orn{text-align:center;color:#ff3c58;letter-spacing:.5em;margin:46px 0 8px;text-shadow:0 0 12px #ff1e3c}
+h2{font-family:'Cinzel Decorative',serif;font-weight:700;font-size:clamp(20px,5vw,30px);letter-spacing:.2em;text-align:center;margin:34px 0 20px}
+h2 small{display:block;font-family:Chonburi,serif;font-weight:400;font-size:15px;letter-spacing:.12em;-webkit-text-fill-color:#ff9aa8;margin-top:2px}
+.card{position:relative;padding:26px 24px;margin-bottom:20px;border-radius:18px;background:linear-gradient(145deg,rgba(255,30,60,.12),rgba(40,0,10,.8) 45%,rgba(122,0,25,.25));border:1px solid rgba(255,60,90,.35);box-shadow:0 0 40px rgba(255,30,60,.12),inset 0 0 40px rgba(255,30,60,.05);backdrop-filter:blur(8px)}
+.card::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,#ff1e3c,transparent)}
+.rv{opacity:0;transform:translateY(34px);transition:1s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
+dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px}
+dt{font-family:Chonburi,serif;color:#ff7a8a;font-weight:400;font-size:15px}
+h3{font-family:Chonburi,serif;color:var(--gold);font-weight:400;margin:18px 0 8px;font-size:17px;letter-spacing:.04em}
+p{margin-bottom:8px}
+p b{font-family:Chonburi,serif;color:#ff8c9b;font-weight:400}
+.pill{display:inline-block;padding:3px 14px;margin:3px 4px 3px 0;border:1px solid rgba(255,60,90,.5);border-radius:20px;font-size:13px;background:rgba(255,30,60,.12);transition:.3s}
+.pill:hover{background:rgba(255,30,60,.3);box-shadow:0 0 15px rgba(255,30,60,.4)}
+.quote{font-family:Chonburi,serif;font-size:clamp(20px,4.5vw,28px);text-align:center;margin:50px 10px 10px;line-height:1.5}
+footer{text-align:center;color:#ff7a8a;letter-spacing:.3em;font-size:12px;margin-top:40px}
+@media(max-width:560px){
+    dl{grid-template-columns:1fr;gap:0}
+    dt{margin-top:8px}
+    .frame-wrapper { width: 90vw; }
+}
+</style>
+</head>
+<body>
+
+<!-- 3D Background Canvas -->
+<canvas id="bg-3d"></canvas>
+
+<div id="loader">
+    <div class="sigil"><i></i><i></i><i></i><b>♱</b></div>
+    <div class="ltitle shine">DATE JERSEY</div>
+    <div class="lsub">the aesthete of Manaridge</div>
+    <div class="bar"><span id="bar"></span></div>
+    <div id="pct">0%</div>
+    <button id="enter">ENTER · เข้าสู่ห้องมืด</button>
+</div>
+
+<div id="main">
+    <section class="hero">
+        <div class="eyebrow">✦ Character Profile ✦</div>
+        <h1 class="shine">DATE<br>JERSEY</h1>
+        <div class="tag">เดต เจอซี่ · วิญญาณร้ายนักสุนทรีย์ ✠♱</div>
+        
+        <div class="frame-wrapper" id="frameWrapper">
+            <div class="frame-container" id="frameContainer">
+                <div class="frame-inner" id="pic"></div>
+                <div class="scan-line"></div>
+                <div class="hud-corner tl"></div>
+                <div class="hud-corner tr"></div>
+                <div class="hud-corner bl"></div>
+                <div class="hud-corner br"></div>
+                <img class="frame-overlay" src="https://i.postimg.cc/90hSn8tw/mi-m-ch-x-8-20261102210404.png" alt="Ornate Frame">
+            </div>
+        </div>
+
+        <div class="thumbs" id="thumbs"></div>
+        <div class="scroll">▼ SCROLL ▼</div>
+    </section>
+
+    <div class="orn rv">✦ ─────── ✦</div>
+    <h2 class="rv shine">NOMINAL INFORMATION<small>ข้อมูลพื้นฐาน</small></h2>
+    <div class="card rv"><dl>
+        <dt>ชื่อ-นามสกุล</dt><dd>เดต เจอซี่ | Date Jersey</dd>
+        <dt>ชื่อเล่น</dt><dd>Date (เดต) ✦</dd>
+        <dt>เพศ</dt><dd>ชาย</dd>
+        <dt>เพศรอง</dt><dd>อัลฟ่าสายดาร์ก / Dominant Alpha ⚜︎</dd>
+        <dt>โพซิชัน</dt><dd>รุก / TOP ✶</dd>
+        <dt>อายุ</dt><dd>43 ปี (เสียชีวิตเมื่อ 6 ปีที่แล้ว / วิญญาณคงรูปลักษณ์วัย 37 ปี) ◈</dd>
+        <dt>บทบาท</dt><dd>วิญญาณร้ายนักสุนทรีย์ / Malicious Spirit ◈</dd>
+        <dt>ถิ่นที่อยู่</dt><dd>เมืองมานาริดจ์ | Manaridge ❖</dd>
+    </dl></div>
+
+    <h2 class="rv shine">VISUAL &amp; APPEARANCE<small>ลักษณะทางกายภาพ เฉี่ยวคมและพรีเมียม</small></h2>
+    <div class="card rv"><dl>
+        <dt>สีผม</dt><dd>ชมพูหม่นประกายแพลตตินัม (Dusty Rose &amp; Platinum Pink) ทรงเรยอนเซอร์ราดลู่ระต้นคอ ยุ่งเหยิงอย่างมีระดับ ขับผิวขาวซีดราวกระเบื้องเคลือบ ✧</dd>
+        <dt>สีตา</dt><dd>เทาประกายฟ้าคราม (Icy Silver-Blue) เรียวรีคมกริบ เสน่ห์เย้ายวน แฝงแววตาดุดันและว่างเปล่าเยือกเย็นยามจ้องเหยื่อ ❖</dd>
+        <dt>แผลเป็น &amp; เครื่องประดับ</dt><dd>แผลเป็นรูปกากบาทบางเฉียบที่โหนกแก้มขวา เจาะหูและริมฝีปากด้วยห่วงเงินเงางาม</dd>
+    </dl></div>
+
+    <h2 class="rv shine">PSYCHOLOGY<small>มิติทางจิตวิทยาและบุคลิกภาพ</small></h2>
+    <div class="card rv">
+        <h3>◆ บุคลิกภาพภายนอก (Visible Persona)</h3>
+        <p><b>✦ รอยยิ้มทะเล้นและคารมแพรวพราว :</b> ปรากฏกายสบายๆ ยิ้มกวนที่มุมปาก น้ำเสียงนุ่มทุ้มชวนเคลิบเคลิ้ม ทว่าแฝงความน่าขนลุก</p>
+        <p><b>✶ ปฏิกิริยาไวเกินควบคุม :</b> เก็บสีหน้าไม่เก่ง ตื่นเต้นง่ายกับของเล่นหรือสิ่งแปลกใหม่ ตื่นตัวจัดเมื่อมีอะไรหลุดกรอบการควบคุม</p>
+        <p><b>❖ Introvert ภายใต้หน้ากาก Social :</b> ภายนอกเอเนอร์จีล้น เข้ากับคนง่าย แต่ลึกๆ แบตหมดไวและต้องการมุมสงบเพื่อเสพความดาร์กเงียบๆ</p>
+        <p><b>✠ รสนิยมสุนทรีย์ขั้นสูง :</b> หลงใหลความแปลกประหลาด เพลงแจ๊สเก่าๆ กลิ่นอายความผุพัง และศิลปะบิดเบี้ยวที่คนปกติเมินหนี</p>
+        <h3>◆ บุคลิกภาพภายใน (Inner Core)</h3>
+        <p><b>✦ การปลงตกขั้นสุด (Radical Acceptance) :</b> เข้าใจสัญชาตญาณดิบของมนุษย์ทะลุปรุโปร่ง ไม่เหลือความแค้นน้ำเน่า มีเพียงความสนุกใน “ปั่นป่วนโลกใบนี้เล่น” ตามอำเภอใจ</p>
+        <p><b>⚜︎ ซื่อสัตย์ต่อความปรารถนา (Unapologetic) :</b> ไร้ความรู้สึกผิดบาป อยากทำอะไรก็ทำโดยไม่หาข้อแก้ตัว</p>
+        <p><b>◈ ระบบล้างความเศร้า 24 ชั่วโมง (Circuit Break) :</b> เรื่องหดหู่หรืออดีตจะถูกตัดวงจรภายในหนึ่งวัน แล้วเปลี่ยนโฟกัสไปหาความบันเทิงและความแปลกใหม่ทันที</p>
+    </div>
+
+    <h2 class="rv shine">PHYSICALITY<small>กายภาพและสถานะพลัง</small></h2>
+    <div class="card rv"><dl>
+        <dt>สมัยมีชีวิต</dt><dd>92 kg. / 199 cm. สูงโปร่ง ไหล่กว้าง แขนขายาวหนา</dd>
+        <dt>สภาพวิญญาณ</dt><dd>เบาหวิว ~18 kg. ดั่งกลุ่มควันหรือกระดาษสา แต่เพิ่มน้ำหนักทับถมและกดทับได้หนักกว่าร่างเดิมหลายเท่ายามล่าเหยื่อ</dd>
+        <dt>เนื้อหนังเดิม</dt><dd>ผิวหนาเหนียวด้านราวกายหยาบ ฝ่ามือสากหนา กล้ามเนื้อทนทานขั้นสุด ◈</dd>
+        <dt>ความชอบ</dt><dd><span class="pill">สิ่งแปลกใหม่</span><span class="pill">สำรวจจิตใจมนุษย์</span><span class="pill">ความเร้าใจ</span><span class="pill">ไหลไปตามบรรยากาศ</span> ✧</dd>
+        <dt>สิ่งที่ไม่ชอบ</dt><dd>กิจวัตรจำเจซ้ำซาก ✧ (เกลียดความน่าเบื่อมากกว่าความตาย)</dd>
+        <dt>Trait พิเศษ</dt><dd>ภาวะสมาธิสั้น (Mild ADHD) และการรับรู้ที่แปลกแยกมาแต่เด็ก (Atypical Spectrum) มุมมองต่อโลกบิดเบี้ยวจากมนุษย์ทั่วไปสิ้นเชิง ❖</dd>
+    </dl></div>
+
+    <h2 class="rv shine">SUPERNATURAL POWERS<small>พลังพิเศษและความสามารถ</small></h2>
+    <div class="card rv">
+        <p><b>☩ สายเวท/พลังจิต :</b> จิตเน้นจินตภาพ (Imagination-Driven Telekinesis) ไร้ออร่า ไร้สี ไร้กลิ่น มีเพียง “แรงดันอากาศมหาศาลที่มองไม่เห็น (Pressure Wave)” กดทับประสาทสัมผัส</p>
+        <h3>ยุทธวิธีในการล่า</h3>
+        <p><b>I. ✠</b> สแกนโครงสร้างภายในร่างเป้าหมายด้วยพลังจิตก่อน เช็กจังหวะหัวใจและจุดเปราะบางของเส้นประสาท</p>
+        <p><b>II. ✠</b> บังคับกลไกภายในร่างอีกฝ่ายโดยตรง บีบรัดกล้ามเนื้อหัวใจให้กระตุกตื่นตระหนก บีบอัดหลอดเลือดในสมองจนหูอื้อ ดิ่งวูบ และสูญเสียการทรงตัวทีละนิดอย่างเลือดเย็น ✦</p>
+    </div>
+
+    <h2 class="rv shine">BACKGROUND STORY<small>ประวัติความเป็นมา</small></h2>
+    <div class="card rv">
+        <p>ในอดีต เดตเป็นชายหนุ่มร่างยักษ์ผู้ทำอาชีพตัดไม้ในเขตป่าลึกใกล้เมืองมานาริดจ์ † เป็นคนปากเก่ง ยิ้มเก่ง สู้ชีวิต และดูเหมือนเป็นที่รักของคนหมู่มาก ทว่าเบื้องหลังรอยยิ้มคือความโดดเดี่ยวและความแปลกแยก</p>
+        <p>ด้วยความสูงใหญ่เกินมนุษย์และระบบรับรู้ที่ต่างออกไป สังคมจึงตราหน้าเขาเป็น “ตัวประหลาด” ความเกลียดชังและอคติกลายเป็นแผนใส่ร้ายป้ายสี ทั้งข้อหาอาชญากรรมและการลักทรัพย์ จนสังคมรุมประณามและทำลายชีวิตเขาทั้งเป็น</p>
+        <p>เมื่อแรงกดดันเกินกว่ามนุษย์คนหนึ่งจะแบกรับไหว จิตใจก็แตกสลาย เขาเลือกที่จะ “ปลงตก” ต่อความโสมมของผู้คน และจากไปในบ้านไม้เก่าๆ หลังนั้น †</p>
+        <p>ความตายมิได้ทำให้เขาดับสูญ หากปลดปล่อยตัวตนที่แท้จริงออกมา ความเจ็บปวดถูกหลอมรวมเป็นความด้านชาและจิตวิญญาณร้าย เดตในร่างวิญญาณจึงไม่ใช่ผีอาฆาตทั่วไป แต่เป็น “วิญญาณร้ายสายสุนทรีย์” ที่มองความเปราะบางของมนุษย์เป็นความบันเทิง ใช้ความตายของตนเป็นสนามเด็กเล่นกดดันจิตใจผู้คนอย่างสำราญใจ ไร้ความรู้สึกผิดบาป และไม่มีวันเศร้าโศกเกิน 24 ชั่วโมงอย่างแน่นอน ✦</p>
+    </div>
+    
+    <div class="quote rv shine">“ความตายไม่ได้พรากฉันไป… มันแค่ปลดล็อกความสนุก”</div>
+    <footer>✦ DATE JERSEY · MANARIDGE ✦</footer>
+</div>
+
+<script>
+// ==========================================
+// 1. IMAGE SLIDER LOGIC
+// ==========================================
+const IMGS=[
+    "https://i.postimg.cc/BnY8gRcC/IMG-0118.png",
+    "https://i.postimg.cc/sg6Bcb9w/IMG-0119.png",
+    "https://i.postimg.cc/Gm7BQ6JQ/IMG-0120.png",
+    "https://i.postimg.cc/y8QJP2Xj/IMG-0121.png",
+    "https://i.postimg.cc/3xSyBzCp/IMG-0122.png"
+];
+const pic=document.getElementById('pic'),th=document.getElementById('thumbs');
+let cur=0,tm;
+
+IMGS.forEach((s,i)=>{
+    const a=new Image(); a.src=s; a.alt='Date '+(i+1); pic.appendChild(a);
+    const t=new Image(); t.src=s; t.className = i === 0 ? 'on' : '';
+    t.onclick=()=>{go(i);auto()}; th.appendChild(t);
+});
+
+function go(i){
+    cur=i;
+    [...pic.children].forEach((e,k)=>e.classList.toggle('on',k===i));
+    [...th.children].forEach((e,k)=>e.classList.toggle('on',k===i));
+}
+function auto(){
+    clearInterval(tm);
+    tm=setInterval(()=>go((cur+1)%IMGS.length),4500);
+}
+go(0); auto();
+
+// ==========================================
+// 2. LOADER LOGIC
+// ==========================================
+let p=0;
+const bar=document.getElementById('bar'),pct=document.getElementById('pct'),en=document.getElementById('enter');
+const iv=setInterval(()=>{
+    p=Math.min(100,p+Math.random()*7+2);
+    bar.style.width=p+'%';
+    pct.textContent=Math.floor(p)+'%';
+    if(p>=100){
+        clearInterval(iv);
+        pct.textContent='READY';
+        en.classList.add('on');
+    }
+},140);
+
+en.onclick=()=>{
+    document.getElementById('loader').classList.add('out');
+    document.getElementById('main').classList.add('show');
+    window.scrollTo(0,0);
+};
+
+// ==========================================
+// 3. SCROLL REVEAL ANIMATION
+// ==========================================
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+}),{threshold:.12});
+document.querySelectorAll('.rv').forEach(e=>io.observe(e));
+
+// ==========================================
+// 4. 3D HOLOGRAPHIC TILT EFFECT (Main Frame)
+// ==========================================
+const frameWrapper = document.getElementById('frameWrapper');
+const frameContainer = document.getElementById('frameContainer');
+
+frameWrapper.addEventListener('mousemove', (e) => {
+    const rect = frameWrapper.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 deg
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    frameContainer.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+});
+
+frameWrapper.addEventListener('mouseleave', () => {
+    frameContainer.style.transform = `rotateX(0deg) rotateY(0deg)`;
+});
+
+// ==========================================
+// 5. CRAZY 3D BACKGROUND (Three.js)
+// ==========================================
+const canvas3d = document.getElementById('bg-3d');
+const scene = new THREE.Scene();
+// Fog for depth and mysterious vibe
+scene.fog = new THREE.FogExp2(0x0a0306, 0.035);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 15;
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, alpha: true, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// --- Generate Procedural Card Texture ---
+function createCardTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256; canvas.height = 384;
+    const ctx = canvas.getContext('2d');
+    
+    // Dark background
+    ctx.fillStyle = '#0f0508';
+    ctx.fillRect(0, 0, 256, 384);
+    
+    // Ornate Border
+    ctx.strokeStyle = '#ff1e3c';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(12, 12, 232, 360);
+    
+    // Inner glow border
+    ctx.shadowColor = '#ff1e3c';
+    ctx.shadowBlur = 15;
+    ctx.strokeStyle = '#ffd2a8';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(22, 22, 212, 340);
+    ctx.shadowBlur = 0;
+    
+    // Central Symbol
+    ctx.fillStyle = '#ff8c9b';
+    ctx.font = '100px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('♱', 128, 192);
+    
+    // Corner accents
+    ctx.fillStyle = '#ffd2a8';
+    ctx.font = '24px serif';
+    ctx.fillText('✦', 40, 40);
+    ctx.fillText('✦', 216, 40);
+    ctx.fillText('✦', 40, 344);
+    ctx.fillText('✦', 216, 344);
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+const cardTexture = createCardTexture();
+
+// --- Create Floating 3D Cards ---
+const cards = [];
+const cardGeo = new THREE.PlaneGeometry(2, 3);
+const cardMat = new THREE.MeshBasicMaterial({ 
+    map: cardTexture, 
+    transparent: true, 
+    opacity: 0.8, 
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending
+});
+
+for(let i = 0; i < 15; i++) {
+    const card = new THREE.Mesh(cardGeo, cardMat);
+    card.position.set(
+        (Math.random() - 0.5) * 30,
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20 - 5
+    );
+    card.rotation.set(
+        Math.random() * Math.PI,
+        Math.random() * Math.PI,
+        Math.random() * Math.PI
+    );
+    card.userData = {
+        rotSpeed: {
+            x: (Math.random() - 0.5) * 0.005,
+            y: (Math.random() - 0.5) * 0.005
+        },
+        floatSpeed: Math.random() * 0.01 + 0.005,
+        floatOffset: Math.random() * Math.PI * 2
+    };
+    scene.add(card);
+    cards.push(card);
+}
+
+// --- Create 3D Glowing Rain/Embers ---
+const particleCount = 1500;
+const rainGeo = new THREE.BufferGeometry();
+const rainPos = new Float32Array(particleCount * 3);
+const rainVel = new Float32Array(particleCount);
+
+for(let i = 0; i < particleCount; i++) {
+    rainPos[i * 3] = (Math.random() - 0.5) * 50;     // x
+    rainPos[i * 3 + 1] = (Math.random() - 0.5) * 50; // y
+    rainPos[i * 3 + 2] = (Math.random() - 0.5) * 30; // z
+    rainVel[i] = Math.random() * 0.15 + 0.05;
+}
+
+rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+
+// Create a glowing dot texture for particles
+const pCanvas = document.createElement('canvas');
+pCanvas.width = 32; pCanvas.height = 32;
+const pCtx = pCanvas.getContext('2d');
+const grad = pCtx.createRadialGradient(16,16,0, 16,16,16);
+grad.addColorStop(0, 'rgba(255, 60, 90, 1)');
+grad.addColorStop(0.4, 'rgba(255, 30, 60, 0.5)');
+grad.addColorStop(1, 'rgba(255, 30, 60, 0)');
+pCtx.fillStyle = grad;
+pCtx.fillRect(0,0,32,32);
+const pTexture = new THREE.CanvasTexture(pCanvas);
+
+const rainMat = new THREE.PointsMaterial({
+    color: 0xff1e3c,
+    size: 0.3,
+    map: pTexture,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const rainSystem = new THREE.Points(rainGeo, rainMat);
+scene.add(rainSystem);
+
+// --- Mouse Parallax for 3D Scene ---
+let mouseX = 0, mouseY = 0;
+document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+// --- Animation Loop ---
+const clock = new THREE.Clock();
+
+function animate3D() {
+    requestAnimationFrame(animate3D);
+    const time = clock.getElapsedTime();
+
+    // Animate Cards
+    cards.forEach(card => {
+        card.rotation.x += card.userData.rotSpeed.x;
+        card.rotation.y += card.userData.rotSpeed.y;
+        card.position.y += Math.sin(time + card.userData.floatOffset) * 0.01;
+    });
+
+    // Animate Rain/Embers
+    const positions = rainSystem.geometry.attributes.position.array;
+    for(let i = 0; i < particleCount; i++) {
+        positions[i * 3 + 1] -= rainVel[i]; // Fall down
+        if(positions[i * 3 + 1] < -25) {
+            positions[i * 3 + 1] = 25; // Reset to top
+        }
+    }
+    rainSystem.geometry.attributes.position.needsUpdate = true;
+    rainSystem.rotation.y = time * 0.02;
+
+    // Camera Parallax
+    camera.position.x += (mouseX * 2 - camera.position.x) * 0.05;
+    camera.position.y += (mouseY * 2 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+}
+animate3D();
+
+// Resize Handler
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
